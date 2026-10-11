@@ -16,3 +16,7 @@ local.properties
 .next/
 .vercel
 .env.local
+
+# Vercel setup output (database password and signing keys)
+.env.vercel.local
+.env.*.local

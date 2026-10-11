@@ -13,3 +13,5 @@ app-debug.zip
 **/node_modules/
 dashboard/dist/
 *.db
+.env.vercel.local
+.env.*.local

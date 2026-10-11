@@ -2,9 +2,16 @@
 
 The requested cloud target is Vercel. Current [Vercel Services documentation](https://vercel.com/docs/services) describes a beta single-project frontend plus FastAPI setup; [Vercel's routing docs](https://vercel.com/docs/services/routing) state that services receive the original `/api/...` path. This repo therefore mounts FastAPI at `/api` in `backend/vercel_app.py` and routes `/api/*` to the Python service in root `vercel.json`. The dashboard uses same-origin `/api`, so browser tokens do not need cross-origin storage. The daily cron targets `/api/internal/retention`. This configuration is untested on a live Vercel account and may need adjustment as the beta changes.
 
-## Quick demo with mock data (no database)
+## Quick demo with a shared Neon database (recommended)
 
-For a test deployment without any database server, set the variables in [`.env.vercel-demo.example`](../.env.vercel-demo.example) (`MOCK_DATA=true`, `APP_ENV=development`, `ENABLE_DEV_AUTH=true`, a strong `DEV_PASSWORD`, the signing keys) and leave `DATABASE_URL` unset. On each cold start the API builds a SQLite file in `/tmp`, creates the schema and seeds the demo accounts and classes. There is no migration step. Limits: changes disappear when the function restarts, and parallel function instances do not share data, so a teacher and a student can occasionally see different state. Use it for demos only, never with real student data. `APP_ENV=production` refuses to start with `MOCK_DATA`.
+Use one free Neon PostgreSQL database so every Vercel function instance sees the same data. `MOCK_DATA` keeps a separate SQLite file per instance, so on Vercel a teacher and a student can land on different instances and see different state; keep `MOCK_DATA` for Render only.
+
+1. Create a Neon project (region Asia Pacific, Singapore) and copy its connection string.
+2. From `backend`, run `python -m scripts.vercel_setup`. It asks for the connection string and a demo password, creates the tables (`alembic upgrade head`), adds the demo accounts (`app.seed`), generates fresh signing keys and writes every Vercel variable to `.env.vercel.local` (git-ignored).
+3. In Vercel, import the repository (framework preset Other, root = repository root), paste the contents of `.env.vercel.local` into Settings > Environment Variables, and deploy. Do not set `MOCK_DATA`.
+4. Check `https://YOUR-APP.vercel.app/api/health/ready`, sign in as `teacher@focuslock.test` at `/`, and as `student@focuslock.test` at `/student`.
+
+Demo only: the demo accounts are reachable by anyone with the URL and password. Never use real student data.
 
 ## Production with a managed database
 
